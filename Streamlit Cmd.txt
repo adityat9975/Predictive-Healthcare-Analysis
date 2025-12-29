@@ -1,6 +1,7 @@
-streamlit run "C:\Users\OPUS\Desktop\Atharva\FOURTH YEAR\PROJECT\Main\MDPfinal.py"
+streamlit run "C:\Users\OPUS\Desktop\Aditya\FOURTH YEAR\PROJECT\Main\MDPfinal.py"
 
 
-streamlit run "C:\Users\OPUS\Desktop\Atharva\FOURTH YEAR\PROJECT\Main\Login.py"
+streamlit run "C:\Users\OPUS\Desktop\Aditya\FOURTH YEAR\PROJECT\Main\Login.py"
+
 
 
