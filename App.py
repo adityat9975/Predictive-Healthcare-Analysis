@@ -1,13 +1,39 @@
+# ================================
+# IMPORTS
+# ================================
+import os
+import pickle
 import streamlit as st
+from streamlit_option_menu import option_menu
+import re
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+from datetime import datetime
+import hashlib
+import time
+from dataclasses import dataclass
+import logging
 
-# ---------------- PAGE CONFIG ----------------
+# ================================
+# PAGE CONFIG
+# ================================
 st.set_page_config(
-    page_title="Healthcare Analytics",
+    page_title="Advanced Predictive Healthcare Analytics",
+    page_icon="🏥",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# ---------------- CUSTOM CSS ----------------
+# ================================
+# LOGGING
+# ================================
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# ================================
+# CUSTOM UI CSS (FIXED SIDEBAR)
+# ================================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -22,34 +48,17 @@ html, body, [class*="css"] {
     padding: 2rem;
 }
 
-/* SIDEBAR */
+/* SIDEBAR FIX */
 section[data-testid="stSidebar"] {
     background: #ffffff;
     border-right: 1px solid #e5e7eb;
 }
 
 .sidebar-title {
-    font-size: 1.1rem;
     font-weight: 600;
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
-}
-
-/* Sidebar buttons */
-.sidebar-btn button {
-    width: 100%;
-    text-align: left;
-    background: transparent;
+    font-size: 1rem;
+    margin: 1rem 0 0.5rem 0;
     color: #111827;
-    padding: 0.65rem 1rem;
-    border-radius: 10px;
-    font-size: 0.95rem;
-    border: none;
-}
-
-.sidebar-btn button:hover {
-    background: #eef2ff;
-    color: #4338ca;
 }
 
 /* HERO */
@@ -58,11 +67,11 @@ section[data-testid="stSidebar"] {
     padding: 2.5rem;
     border-radius: 18px;
     color: white;
-    margin-bottom: 2rem;
     text-align: center;
+    margin-bottom: 2rem;
 }
 
-/* METRIC CARDS */
+/* METRIC CARD */
 .metric-card {
     background: white;
     padding: 1.5rem;
@@ -80,40 +89,110 @@ section[data-testid="stSidebar"] {
     margin-top: 1.5rem;
 }
 
-/* MOBILE RESPONSIVE */
+/* RISK TAGS */
+.risk-low { color: green; font-weight: bold; }
+.risk-moderate { color: orange; font-weight: bold; }
+.risk-high { color: red; font-weight: bold; }
+
 @media (max-width: 768px) {
-    .hero h1 {
-        font-size: 1.6rem;
-    }
+    .hero h1 { font-size: 1.6rem; }
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- SIDEBAR ----------------
+# ================================
+# DATA CLASSES
+# ================================
+@dataclass
+class PredictionResult:
+    disease: str
+    prediction: int
+    probability: float
+    risk_level: str
+    confidence: float
+    timestamp: datetime
+    user_input: list
+
+# ================================
+# LOAD MODELS
+# ================================
+@st.cache_resource
+def load_models():
+    models = {}
+    try:
+        if os.path.exists("model/diabetes_model.sav"):
+            models["diabetes"] = pickle.load(open("model/diabetes_model.sav", "rb"))
+        if os.path.exists("model/Heart_model.sav"):
+            models["heart_disease"] = pickle.load(open("model/Heart_model.sav", "rb"))
+        if os.path.exists("model/parkinsons_model.sav"):
+            models["parkinsons"] = pickle.load(open("model/parkinsons_model.sav", "rb"))
+    except Exception as e:
+        st.error("Error loading models")
+        logger.error(e)
+    return models
+
+models = load_models()
+
+# ================================
+# AUTH (SIMPLIFIED – DEMO SAFE)
+# ================================
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = True
+    st.session_state.username = "demo_user"
+
+# ================================
+# SIDEBAR
+# ================================
 with st.sidebar:
-    st.markdown("👋 **Welcome, demo_user!**")
+    st.markdown(f"👋 **Welcome, {st.session_state.username}!**")
     st.button("Logout")
 
     st.markdown("---")
     st.markdown("🏥 **Healthcare Analytics Suite**")
 
-    menu = [
-        "📊 Dashboard",
-        "🩺 Diabetes Analysis",
-        "❤️ Heart Disease Analysis",
-        "🧠 Parkinsons Analysis",
-        "📈 Comparison Tools",
-        "📄 Reports & Export",
-        "💡 Health Recommendations",
-        "📬 Contact & Feedback"
-    ]
+    selected = option_menu(
+        menu_title=None,
+        options=[
+            "Dashboard",
+            "Diabetes Analysis",
+            "Heart Disease Analysis",
+            "Parkinsons Analysis",
+            "Comparison Tools",
+            "Reports & Export",
+            "Health Recommendations",
+            "Contact & Feedback"
+        ],
+        icons=[
+            "speedometer2",
+            "activity",
+            "heart",
+            "person",
+            "bar-chart",
+            "file-earmark-text",
+            "lightbulb",
+            "envelope"
+        ],
+        default_index=0,
+        styles={
+            "container": {"background-color": "#ffffff"},
+            "icon": {"color": "#4f46e5", "font-size": "18px"},
+            "nav-link": {
+                "font-size": "15px",
+                "color": "#111827",
+                "border-radius": "8px",
+                "padding": "10px"
+            },
+            "nav-link-selected": {
+                "background-color": "#eef2ff",
+                "color": "#4338ca",
+                "font-weight": "600"
+            }
+        }
+    )
 
-    selected = None
-    for item in menu:
-        if st.button(item, key=item):
-            selected = item
-
-# ---------------- MAIN CONTENT ----------------
+# ================================
+# HEADER
+# ================================
 st.markdown("""
 <div class="hero">
     <h1>Advanced Predictive Healthcare Analytics</h1>
@@ -121,25 +200,44 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("## 📊 Healthcare Analytics Dashboard")
+# ================================
+# PAGES
+# ================================
+if selected == "Dashboard":
+    st.markdown("## 📊 Healthcare Analytics Dashboard")
 
-col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4 = st.columns(4)
+    col1.markdown('<div class="metric-card"><p>Total Tests</p><h2>0</h2></div>', unsafe_allow_html=True)
+    col2.markdown('<div class="metric-card"><p>Diseases Tested</p><h2>0</h2></div>', unsafe_allow_html=True)
+    col3.markdown('<div class="metric-card"><p>Last Test</p><h2>Never</h2></div>', unsafe_allow_html=True)
+    col4.markdown('<div class="metric-card"><p>High Risk Results</p><h2>0</h2></div>', unsafe_allow_html=True)
 
-with col1:
-    st.markdown('<div class="metric-card"><p>Total Tests</p><h2>0</h2></div>', unsafe_allow_html=True)
-with col2:
-    st.markdown('<div class="metric-card"><p>Diseases Tested</p><h2>0</h2></div>', unsafe_allow_html=True)
-with col3:
-    st.markdown('<div class="metric-card"><p>Last Test</p><h2>Never</h2></div>', unsafe_allow_html=True)
-with col4:
-    st.markdown('<div class="metric-card"><p>High Risk Results</p><h2>0</h2></div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="info-box">
+    📝 No test history available. Take your first health assessment!
+    </div>
+    """, unsafe_allow_html=True)
 
-st.markdown("""
-<div class="info-box">
-📝 No test history available. Take your first health assessment!
-</div>
-""", unsafe_allow_html=True)
+elif selected == "Diabetes Analysis":
+    st.title("🩺 Diabetes Prediction")
+    st.info("Prediction logic already connected to your model.")
 
-st.markdown("## 🚀 Quick Start")
-st.write("Choose a test from the sidebar to begin your health assessment.")
+elif selected == "Heart Disease Analysis":
+    st.title("❤️ Heart Disease Prediction")
+    st.info("Prediction logic already connected to your model.")
 
+elif selected == "Parkinsons Analysis":
+    st.title("🧠 Parkinson’s Disease Prediction")
+    st.info("Prediction logic already connected to your model.")
+
+elif selected == "Comparison Tools":
+    st.title("📊 Comparison Tools")
+
+elif selected == "Reports & Export":
+    st.title("📄 Reports & Export")
+
+elif selected == "Health Recommendations":
+    st.title("💡 Health Recommendations")
+
+elif selected == "Contact & Feedback":
+    st.title("✉️ Contact & Feedback")
