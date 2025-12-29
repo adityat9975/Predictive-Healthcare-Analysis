@@ -769,12 +769,35 @@ def main():
             ],
             default_index=0,
             styles={
-                "container": {"padding": "0!important", "background-color": "transparent"},
-                "icon": {"color": "white", "font-size": "18px"}, 
-                "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "color": "white"},
-                "nav-link-selected": {"background-color": "rgba(255,255,255,0.2)"},
+                "container": {
+                    "padding": "0!important",
+                    "background-color": "transparent"
+                },
+                "icon": {
+                    "color": "#1f2937",
+                    "font-size": "18px"
+                },
+                "nav-link": {
+                    "font-size": "15px",
+                    "text-align": "left",
+                    "margin": "6px 8px",
+                    "padding": "10px 14px",
+                    "border-radius": "10px",
+                    "color": "#111827",
+                    "background-color": "rgba(255,255,255,0.9)",
+                },
+                "nav-link-hover": {
+                    "background-color": "#e0e7ff",
+                    "color": "#4338ca",
+                },
+                "nav-link-selected": {
+                    "background-color": "#4338ca",
+                    "color": "white",
+                    "font-weight": "600",
+                },
             }
         )
+
     
     # Route to different pages
     if selected == 'Dashboard':
