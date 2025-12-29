@@ -1,12 +1,8 @@
-[theme]
-primaryColor = "#667eea"
-backgroundColor = "#ffffff"
+streamlit run "C:\Users\OPUS\Desktop\Athrava\FOURTH YEAR\PROJECT\Main\MDPfinal.py"
 
 
-streamlit run "C:\Users\OPUS\Desktop\Aditya\FOURTH YEAR\PROJECT\Main\MDPfinal.py"
+streamlit run "C:\Users\OPUS\Desktop\Athrava\FOURTH YEAR\PROJECT\Main\Login.py"
 
-
-streamlit run "C:\Users\OPUS\Desktop\Aditya\FOURTH YEAR\PROJECT\Main\Login.py"
 
 
 
